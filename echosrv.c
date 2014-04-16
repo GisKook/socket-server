@@ -21,7 +21,6 @@ int main(void)
 	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
 	socket_server_start(ss, 200, listen_id);
 
-	const int WORKER_COUNT=4;
 	void* zmq_ctx = zmq_ctx_new();
 	assert(zmq_ctx!=NULL); 
 	struct cetcnav_ctx ctx={zmq_ctx, ss};
@@ -33,8 +32,8 @@ int main(void)
 		"inproc://worker1",
 		"inproc://worker2",
 		"inproc://worker3"
-	}
-	void* zmq_sockets[WORKER_COUNT]={0};
+	};
+	void* zmq_sockets[WORKER_COUNT];
 	int i;
 	for (i = 0; i < WORKER_COUNT; i++) {
 		zmq_sockets[i]=zmq_socket(zmq_ctx, ZMQ_PAIR);
@@ -58,16 +57,16 @@ int main(void)
 				sprintf(buf, "%d", result.id);
 				switch (result.id % 4) {
 					case 0: 
-						s_send(zmq_ctx[0], buf);
+						s_send(zmq_sockets[0], buf);
 						break; 
 					case 1:
-						s_send(zmq_ctx[1], buf); 
+						s_send(zmq_sockets[1], buf); 
 						break;
 					case 2:
-						s_send(zmq_ctx[2], buf); 
+						s_send(zmq_sockets[2], buf); 
 						break;
 					case 3:
-						s_send(zmq_ctx[3], buf);
+						s_send(zmq_sockets[3], buf);
 						break;
 				}
 

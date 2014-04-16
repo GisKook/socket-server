@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <zmq.h>
+#include "zhelpers.h"
 
 USECETCNAV
 
@@ -25,22 +27,22 @@ int CNDasserver::Init(void* ctx) {
 	m_zmqctx = ((struct cetcnav_ctx*)ctx)->zmq_ctx;
 	m_socketserver=((struct cetcnav_ctx*)ctx)->socket_server;
 
-	int retval = pthread_create(m_thread[0], NULL,(void*) ResolveData0, (void*)this);
+	int retval = pthread_create(&m_thread[0], NULL,ResolveData0, (void*)this);
 	if (retval !=0) {
 		printf("create thread fail %s %d", __FILE__, __LINE__);
 		return -1;
 	}
-	retval = pthread_create(m_thread[1], NULL,(void*) ResolveData1, (void*)this);
+	retval = pthread_create(&m_thread[1], NULL,ResolveData1, (void*)this);
 	if (retval !=0) {
 		printf("create thread fail %s %d", __FILE__, __LINE__);
 		return -1;
 	}
-	retval = pthread_create(m_thread[2], NULL,(void*) ResolveData2, (void*)this);
+	retval = pthread_create(&m_thread[2], NULL, ResolveData2, (void*)this);
 	if (retval !=0) {
 		printf("create thread fail %s %d", __FILE__, __LINE__);
 		return -1;
 	}
-	retval = pthread_create(m_thread[3], NULL,(void*) ResolveData3, (void*)this);
+	retval = pthread_create(&m_thread[3], NULL, ResolveData3, (void*)this);
 	if (retval !=0) {
 		printf("create thread fail %s %d", __FILE__, __LINE__);
 		return -1;
@@ -63,18 +65,22 @@ static void ResolveData(int i, void* zmq_ctx){
 		sleep(1);
 	}
 }
-void* CETCNAV::CNDasserver::ResolveData0( void* zmq_ctx) { 
-	ResolveData(0, zmq_ctx);
+void* CETCNAV::CNDasserver::ResolveData0( void* pobject) { 
+	ResolveData(0, ((CNDasserver*)pobject)->m_zmqctx);
+	return NULL;
 }
 
-void* CETCNAV::CNDasserver::ResolveData1( void* ) {
-	ResolveData(1, zmq_ctx);
+void* CETCNAV::CNDasserver::ResolveData1( void* pobject) {
+	ResolveData(1, ((CNDasserver*)pobject)->m_zmqctx);
+	return NULL;
 }
 
-void* CETCNAV::CNDasserver::ResolveData2( void* ) {
-	ResolveData(2, zmq_ctx);
+void* CETCNAV::CNDasserver::ResolveData2( void* pobject) {
+	ResolveData(2,((CNDasserver*)pobject)->m_zmqctx);
+	return NULL;
 }
 
-void* CETCNAV::CNDasserver::ResolveData3( void* ) {
-	ResolveData(3, zmq_ctx); 
+void* CETCNAV::CNDasserver::ResolveData3( void* pobject) {
+	ResolveData(3,((CNDasserver*)pobject)->m_zmqctx);
+	return NULL;
 }

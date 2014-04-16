@@ -20,7 +20,7 @@ NSBEGIN
 struct cetcnav_ctx{
 	void* zmq_ctx;
 	void* socket_server;
-}
+};
 
 class CNDasserver{
 public:
