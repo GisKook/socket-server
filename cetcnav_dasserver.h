@@ -15,6 +15,12 @@ NSBEGIN
 #define FIFO_SIZE 8*1024 
 // 线程个数
 #define THREAD_COUNT 4
+#define WORKER_COUNT THREAD_COUNT
+
+struct cetcnav_ctx{
+	void* zmq_ctx;
+	void* socket_server;
+}
 
 class CNDasserver{
 public:
@@ -24,16 +30,15 @@ public:
 	int ForwordMessage();
 
 private:
-//	static void* ResolveData0(void* );
-//	static void* ResolveData1(void* );
-//	static void* ResolveData2(void* );
-//	static void* ResolveData3(void* );
+	static void* ResolveData0(void* );
+	static void* ResolveData1(void* );
+	static void* ResolveData2(void* );
+	static void* ResolveData3(void* );
 
-	void CreateSockets();
 private:
 	struct kfifo* m_fifo[MAX_FIFO];
 	unsigned char* m_buffer;
-	//pthread_t m_thread[THREAD_COUNT];
+	pthread_t m_thread[THREAD_COUNT];
 	void* m_zmqctx;
 	void* m_socketserver;
 };

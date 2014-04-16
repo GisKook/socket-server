@@ -14,19 +14,20 @@
 USECETCNAV
 
 
-struct cetcnav_ctx{
-	void* zmq_ctx;
-	void* socket_server;
-}
-
 int main(void)
 {
-	CNDasserver dasserver;
-	dasserver.Init();
+
+	struct socket_server* ss = socket_server_create();
+	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
+	socket_server_start(ss, 200, listen_id);
 
 	const int WORKER_COUNT=4;
 	void* zmq_ctx = zmq_ctx_new();
 	assert(zmq_ctx!=NULL); 
+	struct cetcnav_ctx ctx={zmq_ctx, ss};
+	CNDasserver dasserver;
+	dasserver.Init((void*)&ctx);
+
 	char* protocols[]={
 		"inproc://worker0",
 		"inproc://worker1",
@@ -40,10 +41,6 @@ int main(void)
 		zmq_connect(zmq_sockets[i], protocols[i]);
 	}
 	
-	struct socket_server* ss = socket_server_create();
-	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
-	socket_server_start(ss, 200, listen_id);
-
 	// ÊÂ¼şÑ­»·
 	struct socket_message result;
 	for (;;) {
