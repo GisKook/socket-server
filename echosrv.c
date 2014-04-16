@@ -25,7 +25,7 @@ int main(void)
 
 	struct socket_server* ss = socket_server_create();
 	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
-	socket_server_star(ss, 200, listen_id);
+	socket_server_start(ss, 200, listen_id);
 
 	// ÊÂ¼þÑ­»·
 	struct socket_message result;
@@ -37,21 +37,21 @@ int main(void)
 			goto EXIT_LOOP;
 		case SOCKET_DATA:
 			printf("message(%" PRIuPTR ") [id=%d] size=%d\n",result.opaque,result.id, result.ud);
-			socket_server_send(ss, result.id, result.data, result.ud);
 			dasserver.Push(result);
+			printf(".");
 			free(result.data);
 			break;
 		case SOCKET_CLOSE:
-			printf("close(%" PRIuPTR ") [id=%d]\n",result.opaque,result.id);
+			//printf("close(%" PRIuPTR ") [id=%d]\n",result.opaque,result.id);
 			break;
 		case SOCKET_OPEN:
-			printf("open(%" PRIuPTR ") [id=%d] %s\n",result.opaque,result.id,result.data);
+			//printf("open(%" PRIuPTR ") [id=%d] %s\n",result.opaque,result.id,result.data);
 			break;
 		case SOCKET_ERROR:
-			printf("error(%" PRIuPTR ") [id=%d]\n",result.opaque,result.id);
+			//printf("error(%" PRIuPTR ") [id=%d]\n",result.opaque,result.id);
 			break;
 		case SOCKET_ACCEPT:
-			printf("accept(%" PRIuPTR ") [id=%d %s] from [%d]\n",result.opaque, result.ud, result.data, result.id);
+			//printf("accept(%" PRIuPTR ") [id=%d %s] from [%d]\n",result.opaque, result.ud, result.data, result.id);
 			socket_server_start(ss, 300, result.ud);
 			break;
 		}

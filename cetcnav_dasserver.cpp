@@ -1,9 +1,12 @@
 #include "cetcnav_dasserver.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 
 USECETCNAV
 
 int CNDasserver::Init() { 
-	if((m_buffer = malloc(MAX_FIFO*FIFO_SIZE)) == NULL){
+	if((m_buffer = (unsigned char*)malloc(MAX_FIFO*FIFO_SIZE)) == NULL){
 		printf("can't malloc %d bytes %s %d", MAX_FIFO*FIFO_SIZE, __FILE__, __LINE__);
 		return -1;
 	}
@@ -37,6 +40,6 @@ int CNDasserver::Init() {
 	return 0;
 }
 
-int CNDasserver::Push( struct socket_message* msg ) {
-	kfifo_put(m_fifo[msg->id % MAX_FIFO], msg->data, msg->ud);	
+int CNDasserver::Push( struct socket_message& msg ) {
+	kfifo_put(m_fifo[msg.id % MAX_FIFO], (unsigned char*)msg.data, msg.ud);	
 }

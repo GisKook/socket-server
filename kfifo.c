@@ -19,6 +19,9 @@
  *
  */
 #include "kfifo.h"
+#include <stdlib.h>
+#include <string.h>
+#define min(a,b) a>b?b:a
 
 /**
  * kfifo_init - allocates a new FIFO using a preallocated buffer

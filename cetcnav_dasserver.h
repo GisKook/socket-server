@@ -18,11 +18,9 @@ NSBEGIN
 
 class CNDasserver{
 public:
-	CNDasserver();
-	~CNDasserver();
 
 	int Init();
-	int Push(struct socket_message* msg); 
+	int Push(struct socket_message& msg); 
 	int ForwordMessage();
 
 private:
@@ -32,9 +30,10 @@ private:
 //	static void* ResolveData3(void* );
 
 private:
-	struct kfifo m_fifo[MAX_FIFO];
+	struct kfifo* m_fifo[MAX_FIFO];
 	unsigned char* m_buffer;
 	//pthread_t m_thread[THREAD_COUNT];
 };
 
 NSEND
+#endif
