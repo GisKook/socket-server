@@ -170,7 +170,7 @@ socket_server_create() {
 		return NULL;
 	}
 
-	struct socket_server *ss = MALLOC(sizeof(*ss));
+	struct socket_server *ss = (struct socket_server*)MALLOC(sizeof(*ss));
 	ss->event_fd = efd;
 	ss->recvctrl_fd = fd[0];
 	ss->sendctrl_fd = fd[1];
@@ -277,10 +277,10 @@ open_socket(struct socket_server *ss, struct request_open * request, struct sock
 	ai_hints.ai_protocol = IPPROTO_TCP;
 
 	status = getaddrinfo( request->host, port, &ai_hints, &ai_list );
+	int sock= -1;
 	if ( status != 0 ) {
 		goto _failed;
 	}
-	int sock= -1;
 	for (ai_ptr = ai_list; ai_ptr != NULL; ai_ptr = ai_ptr->ai_next ) {
 		sock = socket( ai_ptr->ai_family, ai_ptr->ai_socktype, ai_ptr->ai_protocol );
 		if ( sock < 0 ) {
@@ -375,7 +375,7 @@ send_buffer(struct socket_server *ss, struct socket *s, struct socket_message *r
 
 static void
 append_sendbuffer(struct socket *s, struct request_send * request, int n) {
-	struct write_buffer * buf = MALLOC(sizeof(*buf));
+	struct write_buffer * buf = (struct write_buffer*) MALLOC(sizeof(*buf));
 	buf->ptr = request->buffer+n;
 	buf->sz = request->sz - n;
 	buf->buffer = request->buffer;
@@ -590,7 +590,7 @@ ctrl_cmd(struct socket_server *ss, struct socket_message *result) {
 static int
 forward_message(struct socket_server *ss, struct socket *s, struct socket_message * result) {
 	int sz = s->size;
-	char * buffer = MALLOC(sz);
+	char * buffer = (char*)MALLOC(sz);
 	int n = (int)read(s->fd, buffer, sz);
 	if (n<0) {
 		FREE(buffer);
@@ -724,7 +724,7 @@ socket_server_poll(struct socket_server *ss, struct socket_message * result, int
 			}
 		}
 		struct event *e = &ss->ev[ss->event_index++];
-		struct socket *s = e->s;
+		struct socket *s = (struct socket*)e->s;
 		if (s == NULL) {
 			// dispatch pipe message at beginning
 			continue;

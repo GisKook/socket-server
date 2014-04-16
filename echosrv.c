@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <zmq.h>
+#include "zhelpers.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -11,18 +13,33 @@
 
 USECETCNAV
 
+
+struct cetcnav_ctx{
+	void* zmq_ctx;
+	void* socket_server;
+}
+
 int main(void)
 {
-	/*
-	muduo::net EventLoop loop;
-	muduo::net::InetAddress listenAddr(8888);
-	EchoServer server(&loop, listenAddr);
-	server.start();
-	loop.loop();
-	*/
 	CNDasserver dasserver;
 	dasserver.Init();
 
+	const int WORKER_COUNT=4;
+	void* zmq_ctx = zmq_ctx_new();
+	assert(zmq_ctx!=NULL); 
+	char* protocols[]={
+		"inproc://worker0",
+		"inproc://worker1",
+		"inproc://worker2",
+		"inproc://worker3"
+	}
+	void* zmq_sockets[WORKER_COUNT]={0};
+	int i;
+	for (i = 0; i < WORKER_COUNT; i++) {
+		zmq_sockets[i]=zmq_socket(zmq_ctx, ZMQ_PAIR);
+		zmq_connect(zmq_sockets[i], protocols[i]);
+	}
+	
 	struct socket_server* ss = socket_server_create();
 	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
 	socket_server_start(ss, 200, listen_id);
@@ -36,10 +53,30 @@ int main(void)
 		case SOCKET_EXIT:
 			goto EXIT_LOOP;
 		case SOCKET_DATA:
-			printf("message(%" PRIuPTR ") [id=%d] size=%d\n",result.opaque,result.id, result.ud);
-			dasserver.Push(result);
-			printf(".");
-			free(result.data);
+			{
+				printf("message(%" PRIuPTR ") [id=%d] size=%d\n",result.opaque,result.id, result.ud);
+				dasserver.Push(result);
+				// ¸ø»º´æ·¢ÐÅºÅ
+				char buf[10]={0};
+				sprintf(buf, "%d", result.id);
+				switch (result.id % 4) {
+					case 0: 
+						s_send(zmq_ctx[0], buf);
+						break; 
+					case 1:
+						s_send(zmq_ctx[1], buf); 
+						break;
+					case 2:
+						s_send(zmq_ctx[2], buf); 
+						break;
+					case 3:
+						s_send(zmq_ctx[3], buf);
+						break;
+				}
+
+				printf(".");
+				free(result.data);
+			}
 			break;
 		case SOCKET_CLOSE:
 			//printf("close(%" PRIuPTR ") [id=%d]\n",result.opaque,result.id);
