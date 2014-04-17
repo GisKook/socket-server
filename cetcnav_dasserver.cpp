@@ -47,6 +47,7 @@ int CNDasserver::Init(void* ctx) {
 		printf("create thread fail %s %d", __FILE__, __LINE__);
 		return -1;
 	}
+	sleep(1);
 
 	return 0;
 }
@@ -60,9 +61,8 @@ static void ResolveData(int i, void* zmq_ctx){
 	zmq_bind(sock, g_protocols[i]);
 	for (;;) {
 		char* buffer = s_recv(sock);
-		printf("show data from %d %s", i, buffer);
+		printf("show data from %d %s\n", i, buffer);
 		free(buffer);
-		sleep(1);
 	}
 }
 void* CETCNAV::CNDasserver::ResolveData0( void* pobject) { 
