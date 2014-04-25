@@ -13,7 +13,6 @@
 
 USECETCNAV
 
-
 int main(void)
 {
 	struct socket_server* ss = socket_server_create();

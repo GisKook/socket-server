@@ -21,23 +21,11 @@ struct packet {
 	int len;
 };
 
-// brief 从kfifo中读取一个完整的协议内容
-// param[in] fifo要索引的fifo
-// param[in] start协议开始的标志
-// param[in] slen协议开始标志长度
-// param[in] end协议结束标志
-// param[in] elen协议结束标志长度
-// param[in] buff_len 要检索的内存长度
-// return 返回完整的协议包链表
-struct packet *get_packet_from_kfifo( struct kfifo *fifo /* in */,
-	const char *start/* in */, int slen /* in */,
-	const char *end  /* in */, int elen /* in */, int buff_len /* in */);
-
 // brief 从kfifo中得到以start开头end结尾的指令表
 // param[in/OUT] fifo 要被分析的队列 fifo会被修改
 // param[in] start开始标志
 // param[in] end结束标志
-struct packet* GetPacket(struct kfifo* IN OUT fifo, const char*  IN start, const char* IN end);
+struct list_head* GetPacket(struct kfifo* IN OUT fifo, const char*  IN start, const char* IN end);
 
 // brief 
 // brief 分割字符串

@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <zmq.h>
 #include "zhelpers.h"
+#include "CNToolkit.h"
 
 USECETCNAV
 
@@ -59,9 +60,23 @@ int CNDasserver::Push( struct socket_message& msg ) {
 static void ResolveData(int i, void* zmq_ctx){
 	void* sock = zmq_socket(zmq_ctx, ZMQ_PAIR);
 	zmq_bind(sock, g_protocols[i]);
+	int id = 0;
+	struct packet* pPacket = NULL;
+	struct list_head *pCurPos, *pTemp, *pList;
+	pCurPos=pTemp=pList=NULL;
 	for (;;) {
-		char* buffer = s_recv(sock);
+		char* buffer = s_recv(sock); 
+		id = atoi(buffer); 
+		pList=GetPacket(m_fifo[id%MAX_FIFO], "$", "\r\n"); 
+		if (pList!=NULL) { 
+			list_for_each_safe(pCurPos, pTemp, pList){ 
+				pPacket = container_of(pCurPos, struct packet, list); 
+				
+			} 
+		}
+
 		printf("show data from %d %s\n", i, buffer);
+
 		free(buffer);
 	}
 }
