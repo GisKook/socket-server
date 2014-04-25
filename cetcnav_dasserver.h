@@ -5,7 +5,6 @@
 #include "CNDef.h"
 #include "kfifo.h"
 #include <pthread.h>
-#include "CNProtocolPersonPos.h"
 
 NSBEGIN
 
@@ -42,7 +41,6 @@ private:
 	pthread_t m_thread[THREAD_COUNT];
 	void* m_zmqctx;
 	void* m_socketserver;
-	CNProtocolPersonPos m_ProtoPersonPos;
 };
 
 NSEND

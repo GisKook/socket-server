@@ -57,45 +57,68 @@ int CNDasserver::Push( struct socket_message& msg ) {
 	kfifo_put(m_fifo[msg.id % MAX_FIFO], (unsigned char*)msg.data, msg.ud);	
 }
 
-static void ResolveData(int i, void* zmq_ctx){
+static void ResolveData(int i, void* pobject){
+	CNDasserver* pServer=(CNDasserver*)pobject;
+	void* zmq_ctx=pServer->m_zmqctx;
+
 	void* sock = zmq_socket(zmq_ctx, ZMQ_PAIR);
 	zmq_bind(sock, g_protocols[i]);
 	int id = 0;
 	struct packet* pPacket = NULL;
 	struct list_head *pCurPos, *pTemp, *pList;
 	pCurPos=pTemp=pList=NULL;
+	CNIncType IncType = NULL;
+	CETCNAV::CNReportControl repControl;
+	CETCNAV::CNReportLocation repLocation;
 	for (;;) {
 		char* buffer = s_recv(sock); 
 		id = atoi(buffer); 
-		pList=GetPacket(m_fifo[id%MAX_FIFO], "$", "\r\n"); 
+		pList=GetPacket(pServer->m_fifo[id%MAX_FIFO], "$", "\r\n"); 
 		if (pList!=NULL) { 
 			list_for_each_safe(pCurPos, pTemp, pList){ 
 				pPacket = container_of(pCurPos, struct packet, list); 
-				
-			} 
-		}
+				IncType = GetIncType(pPacket->data, pPacket->len);
+				switch(IncType){
+					case ::CNLOGIN:
+					case ::CNHEART:					
+					case ::CNREPTERPARAM:
+					case ::CNREPMACK:
+						DecodeRepControl(IncType, pPacket->data, pPacket->len,repControl);
+						repControl->set_id(id);
+						break;
+					case ::CNREPPOS:
+					case ::CNREPROUTE:
+					case ::CNREPWARN:
+					case ::CNREPBASE:
+						DecodeRepLocation(IncType, pPacket->data, pPacket->len, repLocation);
+						repLocation->set_id(id);
+						break;
+				}    
+			}        
+		}            
 
 		printf("show data from %d %s\n", i, buffer);
 
 		free(buffer);
 	}
 }
+
 void* CETCNAV::CNDasserver::ResolveData0( void* pobject) { 
-	ResolveData(0, ((CNDasserver*)pobject)->m_zmqctx);
+	ResolveData(0, pobject));
 	return NULL;
 }
 
 void* CETCNAV::CNDasserver::ResolveData1( void* pobject) {
-	ResolveData(1, ((CNDasserver*)pobject)->m_zmqctx);
+	ResolveData(1, pobject);
 	return NULL;
 }
 
 void* CETCNAV::CNDasserver::ResolveData2( void* pobject) {
-	ResolveData(2,((CNDasserver*)pobject)->m_zmqctx);
+	ResolveData(2,pobject);
 	return NULL;
 }
 
 void* CETCNAV::CNDasserver::ResolveData3( void* pobject) {
-	ResolveData(3,((CNDasserver*)pobject)->m_zmqctx);
+	ResolveData(3,pobject);
 	return NULL;
 }
