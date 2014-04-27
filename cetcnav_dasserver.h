@@ -6,6 +6,7 @@
 #include "kfifo.h"
 #include <pthread.h>
 
+struct mdp_client_t;
 NSBEGIN
 
 // 这里和socket_server中定义的最大的socket数必须相同，
@@ -19,7 +20,8 @@ NSBEGIN
 
 struct cetcnav_ctx{
 	void* zmq_ctx;
-	void* socket_server;
+	void* socket_server_ctx;
+	int verbose;
 };
 
 class CNDasserver{
@@ -41,6 +43,7 @@ private:
 	pthread_t m_thread[THREAD_COUNT];
 	void* m_zmqctx;
 	void* m_socketserver;
+	int m_verbose;
 };
 
 NSEND

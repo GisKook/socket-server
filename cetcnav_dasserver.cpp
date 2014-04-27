@@ -5,8 +5,15 @@
 #include <zmq.h>
 #include "zhelpers.h"
 #include "CNToolkit.h"
+#include "CNReportControl.pb.h"
+#include "CNReportLocation.pb.h"
+#include "mdp_common.h"
+#include "mdp_client.h"
+#include <string>
 
 USECETCNAV
+
+using namespace std;
 
 char* g_protocols[]={ 
 	"inproc://worker0",
@@ -26,7 +33,8 @@ int CNDasserver::Init(void* ctx) {
 		assert(m_fifo[i]!=0);
 	}
 	m_zmqctx = ((struct cetcnav_ctx*)ctx)->zmq_ctx;
-	m_socketserver=((struct cetcnav_ctx*)ctx)->socket_server;
+	m_socketserver=((struct cetcnav_ctx*)ctx)->;
+	m_verbose = 
 
 	int retval = pthread_create(&m_thread[0], NULL,ResolveData0, (void*)this);
 	if (retval !=0) {
@@ -60,9 +68,13 @@ int CNDasserver::Push( struct socket_message& msg ) {
 static void ResolveData(int i, void* pobject){
 	CNDasserver* pServer=(CNDasserver*)pobject;
 	void* zmq_ctx=pServer->m_zmqctx;
-
+	// 从socket_server接收消息
 	void* sock = zmq_socket(zmq_ctx, ZMQ_PAIR);
 	zmq_bind(sock, g_protocols[i]);
+
+	// 使用管家模式进行连接
+	mdp_client_t *session= mdp_client_new("tcp://127.0.0.1:5555",pServer->)
+
 	int id = 0;
 	struct packet* pPacket = NULL;
 	struct list_head *pCurPos, *pTemp, *pList;
@@ -83,19 +95,25 @@ static void ResolveData(int i, void* pobject){
 					case ::CNHEART:					
 					case ::CNREPTERPARAM:
 					case ::CNREPMACK:
-						DecodeRepControl(IncType, pPacket->data, pPacket->len,repControl);
-						repControl->set_id(id);
+						{
+							string str;
+							DecodeRepControl(IncType, pPacket->data, pPacket->len,&repControl);
+							repControl.set_id(id);
+							repControl.SerializeToString(str); 
+
+						}
 						break;
 					case ::CNREPPOS:
 					case ::CNREPROUTE:
 					case ::CNREPWARN:
 					case ::CNREPBASE:
-						DecodeRepLocation(IncType, pPacket->data, pPacket->len, repLocation);
-						repLocation->set_id(id);
+						DecodeRepLocation(IncType, pPacket->data, pPacket->len, &repLocation);
+						repLocation.set_id(id);
+						repLocation.
 						break;
 				}    
 			}        
-		}            
+	}            
 
 		printf("show data from %d %s\n", i, buffer);
 
