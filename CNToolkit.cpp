@@ -1,9 +1,11 @@
 #include "CNToolkit.h"
 #include "list.h"
+#include <assert.h>
+#include <stdlib.h>
 
 struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, const char* IN end ) { 
 	assert(fifo!=NULL); 
-	char* pBuffer = fifo->buffer;
+	char* pBuffer = (char*)fifo->buffer;
 	assert(pBuffer!=NULL); 
 	struct list_head* pList=NULL;
 	int nLen = kfifo_len(fifo);
@@ -11,7 +13,7 @@ struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, co
 	int nLen_end=strlen(end);
 	assert(memcmp((void* )pBuffer, (void*)start, nLen_start)==0);
 	char *s=NULL, *e=NULL, *cur=NULL;
-	int i,j;
+	int i;
 	for (i = 0; i<nLen; i++){ 
 		cur=pBuffer+i;
 		if (*cur==*start) {
@@ -32,7 +34,7 @@ struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, co
 			struct packet* pPacket=(struct packet*)malloc(sizeof(*pPacket));
 			assert(pPacket!=NULL);
 			pPacket->len = e-s;
-			pPacket->data = malloc(pPacket->len); 
+			pPacket->data = (unsigned char*)malloc(pPacket->len); 
 			assert(pPacket->data!=NULL);
 			kfifo_get(fifo, pPacket->data, pPacket->len);
 			if (pList==NULL) { 

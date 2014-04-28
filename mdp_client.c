@@ -23,8 +23,8 @@
     =========================================================================
 */
 
-#include "../include/mdp_common.h"
-#include "../include/mdp_client.h"
+#include "mdp_common.h"
+#include "mdp_client.h"
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -61,7 +61,7 @@ mdp_client_new (char *broker, int verbose, void* zmqctx)
     assert (broker);
 
     mdp_client_t *self = (mdp_client_t *) zmalloc (sizeof (mdp_client_t));
-    self->ctx = zctx_shasow_zmq_ctx(zmqctx);
+    self->ctx = zctx_shadow_zmq_ctx(zmqctx);
     self->broker = strdup (broker);
     self->verbose = verbose;
     self->timeout = 2500;           //  msecs
@@ -198,4 +198,12 @@ mdp_client_recv (mdp_client_t *self, char **command_p, char **service_p)
     zframe_destroy (&service);
 
     return msg;     //  Success
+}
+
+void*
+mdp_client_getsocket(mdp_client_t *self)
+{
+	assert(self);
+
+	return self->client;
 }

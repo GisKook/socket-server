@@ -9,6 +9,7 @@
 #include "CNReportLocation.pb.h"
 #include "mdp_common.h"
 #include "mdp_client.h"
+#include "CNProtocolPersonPos.h"
 #include <string>
 
 USECETCNAV
@@ -33,8 +34,8 @@ int CNDasserver::Init(void* ctx) {
 		assert(m_fifo[i]!=0);
 	}
 	m_zmqctx = ((struct cetcnav_ctx*)ctx)->zmq_ctx;
-	m_socketserver=((struct cetcnav_ctx*)ctx)->;
-	m_verbose = 
+	m_socketserver=((struct cetcnav_ctx*)ctx)->socket_server_ctx;
+	m_verbose = ((struct cetcnav_ctx*)ctx)->verbose;
 
 	int retval = pthread_create(&m_thread[0], NULL,ResolveData0, (void*)this);
 	if (retval !=0) {
@@ -79,10 +80,10 @@ static void ResolveData(int i, void* pobject){
 	struct packet* pPacket = NULL;
 	struct list_head *pCurPos, *pTemp, *pList;
 	pCurPos=pTemp=pList=NULL;
-	CNIncType IncType = NULL;
+	::CNIncType IncType = ::CNNULL;
 	CETCNAV::CNReportControl repControl;
 	CETCNAV::CNReportLocation repLocation;
-	zpoller_t *poller=zpoller_new(sock, session->client, NULL);
+	zpoller_t *poller=zpoller_new(sock, mdp_client_getsocket(session), NULL);
 	assert(poller);
 	string str;
 	for (;;) {
@@ -95,15 +96,15 @@ static void ResolveData(int i, void* pobject){
 			if (pList!=NULL) { 
 				list_for_each_safe(pCurPos, pTemp, pList){ 
 					pPacket = container_of(pCurPos, struct packet, list); 
-					IncType = GetIncType(pPacket->data, pPacket->len);
+					IncType = GetIncType(reinterpret_cast<const char*>(pPacket->data), pPacket->len);
 					switch(IncType){
 					case ::CNLOGIN:
 					case ::CNHEART:					
 					case ::CNREPTERPARAM:
 					case ::CNREPMACK:
-						DecodeRepControl(IncType, pPacket->data, pPacket->len,&repControl);
+						DecodeRepControl(IncType, pPacket->data, pPacket->len,repControl);
 						repControl.set_id(id);
-						repControl.SerializeToString(str); 
+						repControl.SerializeToString(&str); 
 				        zmsg_pushstr (request,str.c_str()); 
 				        mdp_client_send (session, "dps", &request); 
 						break;
@@ -111,9 +112,9 @@ static void ResolveData(int i, void* pobject){
 					case ::CNREPROUTE:
 					case ::CNREPWARN:
 					case ::CNREPBASE:
-						DecodeRepLocation(IncType, pPacket->data, pPacket->len, &repLocation);
+						DecodeRepLocation(IncType, pPacket->data, pPacket->len, repLocation);
 						repLocation.set_id(id);
-						repLocation.SerializeToString(str); 
+						repLocation.SerializeToString(&str); 
 				        zmsg_pushstr (request, str.c_str());
 				        mdp_client_send (session, "dps", &request); 
 						break;
@@ -125,13 +126,14 @@ static void ResolveData(int i, void* pobject){
 			}
 			free(buffer);
 			free(pList);
-		    buffer=pList=NULL;
+		    buffer=NULL;
+			pList=NULL;
 
-		}else if(which == session->client){ 
+		}else if(which == mdp_client_getsocket(session)){ 
 			char* command, *service;
 			zmsg_t *reply = mdp_client_recv(session, &command, &service);
 			if (reply) {
-				print ("从管家收到消息\n");
+				printf ("从管家收到消息\n");
 				zmsg_destroy(&reply);
 			}
 			free(command);

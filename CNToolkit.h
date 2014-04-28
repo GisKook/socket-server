@@ -8,8 +8,10 @@
 #ifndef CNTOOLKIT_H_H
 #define CNTOOLKIT_H_H
 
+#include <string.h>
 #include "kfifo.h"
 #include "CNDef.h"
+#include "list.h"
 
 /* 
  * if find a whole packet, return packet ptr; 
@@ -51,12 +53,12 @@ static inline char* cnstrsep(char** stringp, char delim){
 // param[in] 参数顺序
 // param[out] 得到的参数结果缓存
 // param[out] 参数长度
-static inline GetParam(char* IN Frame,unsigned int IN nIndex,char* OUT Dest, unsigned int OUT &nLen)
+static inline int GetParam(char* IN Frame,unsigned int IN nIndex,char* OUT Dest, unsigned int OUT &nLen)
 {
 	nLen = 0;
 
 	char* p = Frame ;
-	for(int i = 0 ; i < nIndex ;i++ )
+	for(unsigned int i = 0 ; i < nIndex ;i++ )
 	{
 		p = strstr(p+1,":") ;
 		if(p == NULL)

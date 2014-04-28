@@ -6,7 +6,6 @@
 #include "kfifo.h"
 #include <pthread.h>
 
-struct mdp_client_t;
 NSBEGIN
 
 // 这里和socket_server中定义的最大的socket数必须相同，
@@ -36,7 +35,7 @@ private:
 	static void* ResolveData2(void* );
 	static void* ResolveData3(void* );
 
-private:
+public:
 	struct kfifo* m_fifo[MAX_FIFO];
 	unsigned char* m_buffer;
 	pthread_t m_thread[THREAD_COUNT];
