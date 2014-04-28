@@ -29,7 +29,6 @@ public:
 
 	int Init(void* );
 	int Push(struct socket_message& msg); 
-	int ForwordMessage();
 
 private:
 	static void* ResolveData0(void* );

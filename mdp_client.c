@@ -56,12 +56,12 @@ void s_mdp_client_connect_to_broker (mdp_client_t *self)
 //  Constructor
 
 mdp_client_t *
-mdp_client_new (char *broker, int verbose)
+mdp_client_new (char *broker, int verbose, void* zmqctx)
 {
     assert (broker);
 
     mdp_client_t *self = (mdp_client_t *) zmalloc (sizeof (mdp_client_t));
-    self->ctx = zctx_new ();
+    self->ctx = zctx_shasow_zmq_ctx(zmqctx);
     self->broker = strdup (broker);
     self->verbose = verbose;
     self->timeout = 2500;           //  msecs

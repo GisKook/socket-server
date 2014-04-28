@@ -71,9 +71,9 @@ static void ResolveData(int i, void* pobject){
 	// 从socket_server接收消息
 	void* sock = zmq_socket(zmq_ctx, ZMQ_PAIR);
 	zmq_bind(sock, g_protocols[i]);
-
-	// 使用管家模式进行连接
-	mdp_client_t *session= mdp_client_new("tcp://127.0.0.1:5555",pServer->)
+	
+	// 使用管家模式进行发送
+	mdp_client_t *session=mdp_client_new("tcp://127.0.0.1:5555", 1, zmq_ctx);
 
 	int id = 0;
 	struct packet* pPacket = NULL;
@@ -82,26 +82,30 @@ static void ResolveData(int i, void* pobject){
 	CNIncType IncType = NULL;
 	CETCNAV::CNReportControl repControl;
 	CETCNAV::CNReportLocation repLocation;
+	zpoller_t *poller=zpoller_new(sock, session->client, NULL);
+	assert(poller);
+	string str;
 	for (;;) {
-		char* buffer = s_recv(sock); 
-		id = atoi(buffer); 
-		pList=GetPacket(pServer->m_fifo[id%MAX_FIFO], "$", "\r\n"); 
-		if (pList!=NULL) { 
-			list_for_each_safe(pCurPos, pTemp, pList){ 
-				pPacket = container_of(pCurPos, struct packet, list); 
-				IncType = GetIncType(pPacket->data, pPacket->len);
-				switch(IncType){
+		void* which = zpoller_wait(poller, -1);
+		if (which == sock) {
+			char* buffer = s_recv(sock); 
+			id = atoi(buffer); 
+			pList=GetPacket(pServer->m_fifo[id%MAX_FIFO], "$", "\r\n"); 
+			zmsg_t *request = zmsg_new ();
+			if (pList!=NULL) { 
+				list_for_each_safe(pCurPos, pTemp, pList){ 
+					pPacket = container_of(pCurPos, struct packet, list); 
+					IncType = GetIncType(pPacket->data, pPacket->len);
+					switch(IncType){
 					case ::CNLOGIN:
 					case ::CNHEART:					
 					case ::CNREPTERPARAM:
 					case ::CNREPMACK:
-						{
-							string str;
-							DecodeRepControl(IncType, pPacket->data, pPacket->len,&repControl);
-							repControl.set_id(id);
-							repControl.SerializeToString(str); 
-
-						}
+						DecodeRepControl(IncType, pPacket->data, pPacket->len,&repControl);
+						repControl.set_id(id);
+						repControl.SerializeToString(str); 
+				        zmsg_pushstr (request,str.c_str()); 
+				        mdp_client_send (session, "dps", &request); 
 						break;
 					case ::CNREPPOS:
 					case ::CNREPROUTE:
@@ -109,20 +113,41 @@ static void ResolveData(int i, void* pobject){
 					case ::CNREPBASE:
 						DecodeRepLocation(IncType, pPacket->data, pPacket->len, &repLocation);
 						repLocation.set_id(id);
-						repLocation.
+						repLocation.SerializeToString(str); 
+				        zmsg_pushstr (request, str.c_str());
+				        mdp_client_send (session, "dps", &request); 
 						break;
-				}    
-			}        
-	}            
+					default:
+						assert(0);
+						break;
+					}    
+				}        
+			}
+			free(buffer);
+			free(pList);
+		    buffer=pList=NULL;
 
-		printf("show data from %d %s\n", i, buffer);
-
-		free(buffer);
+		}else if(which == session->client){ 
+			char* command, *service;
+			zmsg_t *reply = mdp_client_recv(session, &command, &service);
+			if (reply) {
+				print ("从管家收到消息\n");
+				zmsg_destroy(&reply);
+			}
+			free(command);
+			free(service);
+			command=service=NULL;
+		}
 	}
+
+	zpoller_destroy(&poller);
+	mdp_client_destroy(&session);
+	session = NULL;
 }
 
 void* CETCNAV::CNDasserver::ResolveData0( void* pobject) { 
-	ResolveData(0, pobject));
+	// 使用管家模式进行连接
+	ResolveData(0, pobject);
 	return NULL;
 }
 
