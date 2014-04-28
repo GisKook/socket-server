@@ -2,6 +2,7 @@
 #include "list.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, const char* IN end ) { 
 	assert(fifo!=NULL); 
@@ -11,7 +12,11 @@ struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, co
 	int nLen = kfifo_len(fifo);
 	int nLen_start=strlen(start);
 	int nLen_end=strlen(end);
-	assert(memcmp((void* )pBuffer, (void*)start, nLen_start)==0);
+	//assert(memcmp((void* )pBuffer, (void*)start, nLen_start)==0);
+	if(memcmp((void* )pBuffer, (void*)start, nLen_start)!=0){
+		printf("GetPacket %s %d %s", (char*)pBuffer, nLen_start, start);
+		assert(0);
+	}
 	char *s=NULL, *e=NULL, *cur=NULL;
 	int i;
 	for (i = 0; i<nLen; i++){ 

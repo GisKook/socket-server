@@ -69,6 +69,7 @@ int CNDasserver::Push( struct socket_message& msg ) {
 static void ResolveData(int i, void* pobject){
 	CNDasserver* pServer=(CNDasserver*)pobject;
 	void* zmq_ctx=pServer->m_zmqctx;
+	struct socket_server* ss =(struct socket_server*)pServer->m_socketserver;
 	// 从socket_server接收消息
 	void* sock = zmq_socket(zmq_ctx, ZMQ_PAIR);
 	zmq_bind(sock, g_protocols[i]);
@@ -105,6 +106,7 @@ static void ResolveData(int i, void* pobject){
 						DecodeRepControl(IncType, pPacket->data, pPacket->len,repControl);
 						repControl.set_id(id);
 						repControl.SerializeToString(&str); 
+				        zmsg_pushstr (request,"R"); 
 				        zmsg_pushstr (request,str.c_str()); 
 				        mdp_client_send (session, "dps", &request); 
 						break;
@@ -115,6 +117,7 @@ static void ResolveData(int i, void* pobject){
 						DecodeRepLocation(IncType, pPacket->data, pPacket->len, repLocation);
 						repLocation.set_id(id);
 						repLocation.SerializeToString(&str); 
+				        zmsg_pushstr (request,"L"); 
 				        zmsg_pushstr (request, str.c_str());
 				        mdp_client_send (session, "dps", &request); 
 						break;
@@ -132,9 +135,27 @@ static void ResolveData(int i, void* pobject){
 		}else if(which == mdp_client_getsocket(session)){ 
 			char* command, *service;
 			zmsg_t *reply = mdp_client_recv(session, &command, &service);
-			if (reply) {
-				printf ("从管家收到消息\n");
+			if (reply) { 
+				zframe_t *report_type = zmsg_pop (reply);
+				char *report_type_str = zframe_strdup (report_type);
+				zframe_t *report_content=zmsg_pop(reply);
+				char *report_content_str= zframe_strdup (report_content);
+				printf("aaa %s a, %s\n", report_type_str, report_content_str);
+				if(*report_type_str=='R'){
+					printf("aaa\n");
+					CNReportControl repc;
+					repc.ParseFromString(string(report_content_str));
+					char buf[16]={0};
+					sprintf(buf, "%ll", repc.deviceinfo().imei());
+					socket_server_send(ss, repc.id(), buf, 16);
+					
+				}
+
+				zframe_destroy (&report_content);
+				zframe_destroy (&report_type);
 				zmsg_destroy(&reply);
+				free(report_type_str);
+				free(report_content_str);
 			}
 			free(command);
 			free(service);
