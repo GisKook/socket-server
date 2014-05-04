@@ -15,6 +15,11 @@ USECETCNAV
 
 int main(void)
 {
+
+	struct sigaction sa;
+	sa.sa_handler=SIG_IGN;
+	sigaction(SIGPIPE,&sa,0);
+
 	struct socket_server* ss = socket_server_create();
 	int listen_id = socket_server_listen(ss, 100, "", 8888, 32);
 	socket_server_start(ss, 200, listen_id);

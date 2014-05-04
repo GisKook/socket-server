@@ -9,33 +9,27 @@ struct list_head* GetPacket( struct kfifo* IN OUT fifo, const char* IN start, co
 	char* pBuffer = (char*)fifo->buffer;
 	assert(pBuffer!=NULL); 
 	struct list_head* pList=NULL;
-	int nLen = kfifo_len(fifo);
 	int nLen_start=strlen(start);
 	int nLen_end=strlen(end);
-	//assert(memcmp((void* )pBuffer, (void*)start, nLen_start)==0);
+	assert(memcmp((void* )pBuffer+fifo->out, (void*)start, nLen_start)==0);
 	if(memcmp((void* )pBuffer, (void*)start, nLen_start)!=0){
-		printf("GetPacket %s %d %s", (char*)pBuffer, nLen_start, start);
 		assert(0);
 	}
 	char *s=NULL, *e=NULL, *cur=NULL;
 	int i;
-	for (i = 0; i<nLen; i++){ 
+	for (i = fifo->out; i<fifo->in; i++){ 
 		cur=pBuffer+i;
-		if (*cur==*start) {
-			if (memcmp((void*)cur, (void*)start, nLen_start)==0) {
-				s=cur;
-				i+=nLen_start-1;
-				continue;
-			}
+		if (memcmp((void*)cur, (void*)start, nLen_start)==0) {
+			s=cur;
+			i+=nLen_start-1;
+			continue;
 		}
-		if (s!=NULL&&*cur==*end) {
-			if (memcmp((void*)cur, (void*)end, nLen_end)==0) {
+		if (s!=NULL&& memcmp((void*)cur, (void*)end, nLen_end)==0) {
 				e=cur+nLen_end; 
 				i+=nLen_end-1;
-			}
 		}
 		if (s!=NULL&&e!=NULL) { 
-			assert(s==pBuffer);
+			assert(s==pBuffer+fifo->out);
 			struct packet* pPacket=(struct packet*)malloc(sizeof(*pPacket));
 			assert(pPacket!=NULL);
 			pPacket->len = e-s;

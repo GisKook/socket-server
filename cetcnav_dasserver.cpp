@@ -75,7 +75,7 @@ static void ResolveData(int i, void* pobject){
 	zmq_bind(sock, g_protocols[i]);
 	
 	// 使用管家模式进行发送
-	mdp_client_t *session=mdp_client_new("tcp://127.0.0.1:5555", 1, zmq_ctx);
+	mdp_client_t *session=mdp_client_new("tcp://127.0.0.1:5555", 0, zmq_ctx);
 
 	int id = 0;
 	struct packet* pPacket = NULL;
@@ -106,8 +106,8 @@ static void ResolveData(int i, void* pobject){
 						DecodeRepControl(IncType, pPacket->data, pPacket->len,repControl);
 						repControl.set_id(id);
 						repControl.SerializeToString(&str); 
-				        zmsg_pushstr (request,"R"); 
 				        zmsg_pushstr (request,str.c_str()); 
+				        zmsg_pushstr (request,"R"); 
 				        mdp_client_send (session, "dps", &request); 
 						break;
 					case ::CNREPPOS:
@@ -122,6 +122,7 @@ static void ResolveData(int i, void* pobject){
 				        mdp_client_send (session, "dps", &request); 
 						break;
 					default:
+						printf("GetIncType input %s\n", pPacket->data);
 						assert(0);
 						break;
 					}    
@@ -140,15 +141,14 @@ static void ResolveData(int i, void* pobject){
 				char *report_type_str = zframe_strdup (report_type);
 				zframe_t *report_content=zmsg_pop(reply);
 				char *report_content_str= zframe_strdup (report_content);
-				printf("aaa %s a, %s\n", report_type_str, report_content_str);
 				if(*report_type_str=='R'){
-					printf("aaa\n");
 					CNReportControl repc;
-					repc.ParseFromString(string(report_content_str));
-					char buf[16]={0};
-					sprintf(buf, "%ll", repc.deviceinfo().imei());
-					socket_server_send(ss, repc.id(), buf, 16);
-					
+					string str = report_content_str;
+					repc.ParseFromString(str);
+					char* buf=new char[16];
+					memset((void*)buf, 0, 16);
+					sprintf(buf, "%llu", repc.deviceinfo().imei());
+					socket_server_send(ss, repc.id(), buf, 16); 
 				}
 
 				zframe_destroy (&report_content);
